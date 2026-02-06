@@ -1,0 +1,34 @@
+spring:
+  application:
+    name: euro-route-backend
+  datasource:
+    url: jdbc:postgresql://postgres:5432/euro_route_db
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false
+    open-in-view: false
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    time-zone: UTC
+
+jwt:
+  secret: mySecretKeyForJWTTokenGenerationAndValidationPurposes123456789
+  expiration: 86400000
+
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+logging:
+  level:
+    root: INFO
+    com.euroroute: DEBUG
