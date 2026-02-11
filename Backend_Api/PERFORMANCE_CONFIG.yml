@@ -1,0 +1,71 @@
+# Add this to your Backend_Api/src/main/resources/application.yml
+# These settings optimize the visitor tracking system
+
+# Database Connection Pool (HikariCP)
+spring:
+  datasource:
+    # Increase pool size for concurrent requests
+    hikari:
+      maximum-pool-size: 25
+      minimum-idle: 5
+      connection-timeout: 20000
+      idle-timeout: 300000
+      max-lifetime: 1200000
+      
+  # JPA/Hibernate Configuration
+  jpa:
+    hibernate:
+      ddl-auto: validate  # Don't auto-create tables in production
+    properties:
+      hibernate:
+        # Connection pooling
+        hikari:
+          maximum-pool-size: 25
+        # Batch processing for inserts (reduces DB round trips)
+        jdbc:
+          batch_size: 50
+          fetch_size: 50
+          batch_versioned_data: true
+        # Query optimization
+        query:
+          in_clause_parameter_padding: true
+        # Disable unnecessary SQL comments
+        use_sql_comments: false
+        # Improve session flush performance
+        flush_before_completion: false
+        
+  # Cache Configuration (in-memory caching)
+  cache:
+    type: simple  # Use ConcurrentHashMap cache
+    cache-names:
+      - visitorStats
+    
+  # Messaging for WebSocket
+  websocket:
+    message:
+      # Larger buffer for WebSocket messages
+      buffer-size: 8192
+
+# Server Configuration
+server:
+  # Thread pool for request handling
+  tomcat:
+    threads:
+      max: 200
+      min-spare: 20
+    # Connection timeout
+    connection-timeout: 20000
+    # Keep-alive for persistent connections
+    keep-alive-timeout: 60000
+  # Request size limit (adjust as needed)
+  tomcat:
+    max-http-post-size: 2097152  # 2MB
+
+# Logging
+logging:
+  level:
+    # Reduce info logging for page views (too verbose)
+    com.euroroute.service.PageViewService: WARN
+    com.euroroute.controller.PageViewController: WARN
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN

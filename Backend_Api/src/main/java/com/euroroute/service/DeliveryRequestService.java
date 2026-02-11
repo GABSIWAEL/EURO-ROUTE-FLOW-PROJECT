@@ -2,7 +2,10 @@ package com.euroroute.service;
 
 import com.euroroute.dto.DeliveryRequestDTO;
 import com.euroroute.entity.DeliveryRequest;
+import com.euroroute.entity.Notification;
+import com.euroroute.entity.User;
 import com.euroroute.repository.DeliveryRequestRepository;
+import com.euroroute.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +18,12 @@ public class DeliveryRequestService {
 
     @Autowired
     private DeliveryRequestRepository deliveryRequestRepository;
+
+    @Autowired
+    private NotificationService notificationService;
+
+    @Autowired
+    private UserRepository userRepository;
 
     public DeliveryRequestDTO createDeliveryRequest(DeliveryRequestDTO dto) {
         DeliveryRequest request = new DeliveryRequest();
@@ -35,6 +44,16 @@ public class DeliveryRequestService {
         request.setTrackingNumber(generateTrackingNumber());
 
         DeliveryRequest saved = deliveryRequestRepository.save(request);
+
+        // Notify admin users
+        notifyAdminUsers(
+                "Nouvelle demande de livraison",
+                "Une nouvelle demande de livraison a été créée pour " + dto.getClientName() + " (Tracking: "
+                        + saved.getTrackingNumber() + ")",
+                Notification.NotificationType.NEW_DELIVERY,
+                saved.getId(),
+                Notification.RelatedEntityType.DELIVERY_REQUEST);
+
         return convertToDTO(saved);
     }
 
@@ -67,8 +86,11 @@ public class DeliveryRequestService {
         DeliveryRequest request = deliveryRequestRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Delivery request not found"));
 
+        String oldStatus = request.getStatus().toString();
+        String newStatus = dto.getStatus() != null ? dto.getStatus().toUpperCase() : oldStatus;
+
         if (dto.getStatus() != null) {
-            request.setStatus(DeliveryRequest.DeliveryStatus.valueOf(dto.getStatus().toUpperCase()));
+            request.setStatus(DeliveryRequest.DeliveryStatus.valueOf(newStatus));
         }
         if (dto.getAssignedDriverId() != null) {
             request.setAssignedDriverId(dto.getAssignedDriverId());
@@ -81,6 +103,17 @@ public class DeliveryRequestService {
         }
 
         DeliveryRequest updated = deliveryRequestRepository.save(request);
+
+        // Notify on status change
+        if (!oldStatus.equals(newStatus)) {
+            notifyAdminUsers(
+                    "Statut de livraison modifié",
+                    "La demande " + updated.getTrackingNumber() + " est passée de " + oldStatus + " à " + newStatus,
+                    Notification.NotificationType.STATUS_CHANGED,
+                    updated.getId(),
+                    Notification.RelatedEntityType.DELIVERY_REQUEST);
+        }
+
         return convertToDTO(updated);
     }
 
@@ -97,6 +130,15 @@ public class DeliveryRequestService {
         request.setCompletedAt(java.time.LocalDateTime.now());
 
         DeliveryRequest updated = deliveryRequestRepository.save(request);
+
+        // Notify admin users about completion
+        notifyAdminUsers(
+                "Livraison complétée",
+                "La demande " + trackingNumber + " pour " + updated.getClientName() + " a été marquée comme livrée",
+                Notification.NotificationType.DELIVERY_COMPLETED,
+                updated.getId(),
+                Notification.RelatedEntityType.DELIVERY_REQUEST);
+
         return convertToDTO(updated);
     }
 
@@ -129,5 +171,34 @@ public class DeliveryRequestService {
         long timestamp = System.currentTimeMillis();
         int random = (int) (Math.random() * 10000);
         return String.format("ER%d%04d", timestamp % 1000000, random);
+    }
+
+    /**
+     * Notify all admin users of an important delivery event
+     */
+    private void notifyAdminUsers(String title, String message,
+            Notification.NotificationType type,
+            String relatedEntityId,
+            Notification.RelatedEntityType relatedEntityType) {
+        try {
+            // Find all admin users
+            List<User> admins = userRepository.findAll().stream()
+                    .filter(user -> user.getRole() == User.UserRole.ADMIN)
+                    .collect(Collectors.toList());
+
+            // Send notification to each admin
+            for (User admin : admins) {
+                notificationService.createNotification(
+                        admin.getId(),
+                        title,
+                        message,
+                        type,
+                        relatedEntityId,
+                        relatedEntityType);
+            }
+        } catch (Exception e) {
+            // Log but don't fail the operation if notification fails
+            System.err.println("Failed to send notifications: " + e.getMessage());
+        }
     }
 }

@@ -1,0 +1,87 @@
+# Add these configurations to your Backend_Api/src/main/resources/application.yml
+
+# ========================================
+# PAGE VIEW TRACKING CONFIGURATION
+# ========================================
+app:
+  pageview:
+    # Retention period for page view data (in days)
+    # After this period, old data is automatically deleted
+    # Adjust based on your needs:
+    # - 7 days: Minimal storage, focus on real-time
+    # - 30 days: Good balance
+    # - 90 days: Default, recommended for most sites
+    # - 180 days: More history, larger storage
+    retention-days: 90
+
+# ========================================
+# DATABASE OPTIMIZATION FOR TRACKING
+# ========================================
+spring:
+  datasource:
+    hikari:
+      # Connection pool for handling page view writes
+      maximum-pool-size: 25
+      minimum-idle: 5
+      connection-timeout: 20000
+      idle-timeout: 300000
+      max-lifetime: 1200000
+      # Enable connection auto-commit for batch operations
+      auto-commit: true
+      
+  jpa:
+    hibernate:
+      # Keep tables but don't auto-migrate
+      ddl-auto: validate
+    properties:
+      hibernate:
+        # Batch insert optimization
+        jdbc:
+          batch_size: 50
+          fetch_size: 50
+          batch_versioned_data: true
+        # Disable query comments
+        generate_statistics: false
+        use_sql_comments: false
+        
+  # In-memory caching for visitor stats
+  cache:
+    type: simple
+    cache-names:
+      - visitorStats
+
+# ========================================
+# SCHEDULING CONFIGURATION
+# ========================================
+spring:
+  task:
+    scheduling:
+      pool:
+        size: 5
+      thread-name-prefix: pageview-scheduler-
+
+# ========================================
+# LOGGING (Reduce verbosity for tracking)
+# ========================================
+logging:
+  level:
+    com.euroroute.service.PageViewService: WARN
+    com.euroroute.controller.PageViewController: WARN
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
+
+# ========================================
+# SERVER PERFORMANCE
+# ========================================
+server:
+  tomcat:
+    # Thread pool for HTTP requests
+    threads:
+      max: 200
+      min-spare: 20
+    # Connection timeout
+    connection-timeout: 20000
+    # Keep-alive for WebSocket connections
+    keep-alive-timeout: 60000
+    # Buffer size for WebSocket messages
+    buffer-size: 8192

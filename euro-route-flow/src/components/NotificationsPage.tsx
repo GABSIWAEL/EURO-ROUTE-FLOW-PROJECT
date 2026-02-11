@@ -222,8 +222,8 @@ export const NotificationsPage = ({ isOpen, onClose }: NotificationsPageProps) =
                                 <div
                                     key={notification.id}
                                     className={`p-4 rounded-lg border transition-all ${notification.read
-                                            ? "bg-gray-50 border-gray-200"
-                                            : "bg-blue-50 border-blue-200"
+                                        ? "bg-gray-50 border-gray-200"
+                                        : "bg-blue-50 border-blue-200"
                                         } hover:shadow-md`}
                                 >
                                     <div className="flex gap-3 items-start">

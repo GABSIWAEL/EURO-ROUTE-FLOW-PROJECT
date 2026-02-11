@@ -28,34 +28,116 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      elasticsearch:
+        condition: service_started
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/euro_route_db
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.PostgreSQLDialect
+      ELASTICSEARCH_HOST: elasticsearch
+      ELASTICSEARCH_PORT: 9200
+      LOGSTASH_HOST: logstash
+      LOGSTASH_PORT: 5000
+      TZ: Europe/Paris
     ports:
       - "8081:8080"
+    volumes:
+      - app_logs:/var/log/app
     networks:
       - euro-route-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "com.example.service=backend"
 
   # Frontend (Vite React)
   frontend:
     build:
       context: ./euro-route-flow
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:8081/api
     container_name: euro-route-frontend
     ports:
       - "3000:3000"
-    environment:
-      VITE_API_URL: http://localhost:8081/api
     depends_on:
       - backend
     networks:
       - euro-route-network
 
+  # Elasticsearch - Log Storage and Search
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.0
+    container_name: euro-route-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - euro-route-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    mem_limit: 200m
+
+  # Logstash - Log Processing and Forwarding
+  logstash:
+    image: docker.elastic.co/logstash/logstash:7.17.0
+    container_name: euro-route-logstash
+    ports:
+      - "5000:5000/udp"
+      - "5000:5000/tcp"
+      - "9600:9600"
+    volumes:
+      - ./logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+      - app_logs:/var/log/app
+    environment:
+      - "LS_JAVA_OPTS=-Xmx256m -Xms256m"
+    depends_on:
+      - elasticsearch
+    networks:
+      - euro-route-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9600/_node/stats || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    mem_limit: 200m
+
+  # Kibana - Log Visualization and Search UI
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.17.0
+    container_name: euro-route-kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+    networks:
+      - euro-route-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5601/api/status || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    mem_limit: 200m
+
 volumes:
   postgres_data:
+  elasticsearch_data:
+  app_logs:
 
 networks:
   euro-route-network:

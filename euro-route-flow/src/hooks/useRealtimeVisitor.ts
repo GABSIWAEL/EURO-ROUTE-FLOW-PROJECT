@@ -8,7 +8,7 @@ import { useEffect, useState, useRef } from 'react';
 export const useRealtimeVisitor = (pageName: string, pageType: string) => {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const previousPageRef = useRef<string | null>(null);
-  
+
   // Get API base URL from environment or default
   const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081/api';
 

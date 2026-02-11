@@ -32,6 +32,24 @@ public class DeliveryRequest {
     @Column(name = "delivery_address", nullable = false)
     private String deliveryAddress;
 
+    @Column(name = "pickup_lat")
+    private Double pickupLat;
+
+    @Column(name = "pickup_lng")
+    private Double pickupLng;
+
+    @Column(name = "delivery_lat")
+    private Double deliveryLat;
+
+    @Column(name = "delivery_lng")
+    private Double deliveryLng;
+
+    @Column(name = "pickup_from_map")
+    private Boolean pickupFromMap = false;
+
+    @Column(name = "delivery_from_map")
+    private Boolean deliveryFromMap = false;
+
     @Column(name = "item_type", nullable = false)
     private String itemType;
 

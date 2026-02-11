@@ -2,6 +2,8 @@ package com.euroroute.dto;
 
 import lombok.*;
 
+import java.util.Date;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -12,4 +14,5 @@ public class UserDTO {
     private String fullName;
     private String role;
     private boolean isActive;
+    private Date createdAt;
 }

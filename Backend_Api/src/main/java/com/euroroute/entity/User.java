@@ -40,6 +40,9 @@ public class User implements UserDetails {
     @Column(name = "updated_at")
     private Date updatedAt;
 
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Driver driver;
+
     @PrePersist
     protected void onCreate() {
         createdAt = new Date();

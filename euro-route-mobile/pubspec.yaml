@@ -1,0 +1,76 @@
+name: euro_route_mobile
+description: "Flutter mobile app for Euro Route delivery management system - Driver and Admin dashboards"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # State Management
+  getx: ^4.6.6
+  provider: ^6.0.0
+  
+  # HTTP & Networking
+  http: ^1.1.0
+  dio: ^5.3.0
+  socket_io_client: ^2.0.2
+  
+  # UI & Design
+  google_fonts: ^6.1.0
+  flutter_svg: ^2.0.7
+  smooth_page_indicator: ^1.1.0
+  animations: ^2.0.7
+  flutter_animate: ^4.2.0+1
+  
+  # Location & Maps
+  geolocator: ^9.0.2
+  google_maps_flutter: ^2.5.1
+  
+  # Local Storage
+  shared_preferences: ^2.2.2
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  
+  # Date & Time
+  intl: ^0.19.0
+  
+  # Utilities
+  equatable: ^2.0.5
+  uuid: ^4.0.0
+  image_picker: ^1.0.4
+  permission_handler: ^11.4.4
+  
+  # Push Notifications
+  firebase_core: ^2.24.0
+  firebase_messaging: ^14.6.0
+  
+  # Logging
+  logger: ^2.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/images/
+    - assets/icons/
+  
+  fonts:
+    - family: GurillaFont
+      fonts:
+        - asset: assets/fonts/Gorilla-Regular.ttf
+        - asset: assets/fonts/Gorilla-Bold.ttf
+          weight: 700
+
+# iOS Configuration
+ios:
+  team_id: XXXXXXXXXX  # Replace with your Team ID

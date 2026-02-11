@@ -3,6 +3,7 @@ package com.euroroute.service;
 import com.euroroute.dto.DriverDTO;
 import com.euroroute.entity.Driver;
 import com.euroroute.repository.DriverRepository;
+import com.euroroute.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +15,9 @@ public class DriverService {
 
     @Autowired
     private DriverRepository driverRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     public DriverDTO createDriver(DriverDTO dto) {
         Driver driver = new Driver();
@@ -74,7 +78,18 @@ public class DriverService {
     }
 
     public void deleteDriver(String id) {
-        driverRepository.deleteById(id);
+        // Get the driver first
+        Driver driver = driverRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Driver not found"));
+        
+        // Delete associated user if it exists
+        if (driver.getUser() != null) {
+            userRepository.deleteById(driver.getUser().getId());
+            // The cascade delete in User entity will handle the driver deletion
+        } else {
+            // No associated user, just delete the driver
+            driverRepository.deleteById(id);
+        }
     }
 
     public DriverDTO getDriverByUserId(String userId) {

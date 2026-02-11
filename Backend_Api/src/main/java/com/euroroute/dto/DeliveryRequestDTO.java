@@ -15,6 +15,12 @@ public class DeliveryRequestDTO {
     private String clientEmail;
     private String pickupAddress;
     private String deliveryAddress;
+    private Double pickupLat;
+    private Double pickupLng;
+    private Double deliveryLat;
+    private Double deliveryLng;
+    private Boolean pickupFromMap;
+    private Boolean deliveryFromMap;
     private String itemType;
     private String itemSize;
     private String itemWeight;

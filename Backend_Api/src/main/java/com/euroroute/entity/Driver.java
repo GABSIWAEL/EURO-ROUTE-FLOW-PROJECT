@@ -16,7 +16,11 @@ public class Driver {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @Column(name = "user_id")
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    private User user;
+
+    @Column(name = "user_id", insertable = false, updatable = false)
     private String userId;
 
     @Column(name = "full_name", nullable = false)

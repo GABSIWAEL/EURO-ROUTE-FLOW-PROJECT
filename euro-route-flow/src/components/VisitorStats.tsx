@@ -107,7 +107,7 @@ export const VisitorStats = () => {
     };
 
     const cleanup = setupWebSocket();
-    
+
     return () => {
       cleanup.then(fn => fn?.());
     };
@@ -162,9 +162,8 @@ export const VisitorStats = () => {
         </div>
         <div className="flex items-center gap-2">
           <div
-            className={`w-3 h-3 rounded-full ${
-              connectedToWebSocket ? "bg-green-500 animate-pulse" : "bg-gray-300"
-            }`}
+            className={`w-3 h-3 rounded-full ${connectedToWebSocket ? "bg-green-500 animate-pulse" : "bg-gray-300"
+              }`}
           />
           <span className="text-sm font-medium text-gray-600">
             {connectedToWebSocket ? "En direct" : "Polling"}
@@ -178,11 +177,10 @@ export const VisitorStats = () => {
           <button
             key={hours}
             onClick={() => setSelectedPeriod(hours)}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              selectedPeriod === hours
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${selectedPeriod === hours
                 ? "bg-blue-600 text-white"
                 : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-            }`}
+              }`}
           >
             {hours === 1 ? "1h" : hours === 6 ? "6h" : hours === 24 ? "24h" : "1w"}
           </button>

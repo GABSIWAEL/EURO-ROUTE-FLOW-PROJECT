@@ -12,7 +12,7 @@ export const usePageTracking = (pageName: string, pageType: string) => {
   const lastUpdateRef = useRef(0);
   const updateIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isTrackingRef = useRef(true);
-  
+
   // Get API base URL from environment or default
   const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081/api';
 
@@ -66,14 +66,14 @@ export const usePageTracking = (pageName: string, pageType: string) => {
 
     const updateTimeSpent = async () => {
       const now = Date.now();
-      
+
       // Only update if 60 seconds have passed since last update
       if (now - lastUpdateRef.current < 60000) {
         return;
       }
 
       const timeSpent = Math.floor((now - startTime) / 1000);
-      
+
       try {
         await fetch(`${API_BASE_URL}/page-views/${pageViewId}/time-spent?timeSpentSeconds=${timeSpent}`, {
           method: 'PUT',

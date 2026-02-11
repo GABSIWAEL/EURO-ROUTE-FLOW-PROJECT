@@ -92,7 +92,7 @@ export const RealtimeVisitorStats = () => {
     };
 
     const cleanup = setupWebSocket();
-    
+
     return () => {
       cleanup.then(fn => fn?.());
     };
@@ -144,9 +144,8 @@ export const RealtimeVisitorStats = () => {
         </div>
         <div className="flex items-center gap-2">
           <div
-            className={`w-3 h-3 rounded-full ${
-              connectedToWebSocket ? "bg-green-500 animate-pulse" : "bg-gray-300"
-            }`}
+            className={`w-3 h-3 rounded-full ${connectedToWebSocket ? "bg-green-500 animate-pulse" : "bg-gray-300"
+              }`}
           />
           <span className="text-sm font-medium text-gray-600">
             {connectedToWebSocket ? "En direct" : "Offline"}
