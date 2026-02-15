@@ -10,9 +10,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   
   # State Management
-  getx: ^4.6.6
+  get: ^4.6.6
   provider: ^6.0.0
   
   # HTTP & Networking
@@ -37,18 +39,19 @@ dependencies:
   hive_flutter: ^1.1.0
   
   # Date & Time
-  intl: ^0.19.0
+  intl: ^0.20.2
   
   # Utilities
   equatable: ^2.0.5
   uuid: ^4.0.0
   image_picker: ^1.0.4
-  permission_handler: ^11.4.4
-  
+  permission_handler: ^11.0.0
+  mobile_scanner: ^3.5.7
+
   # Push Notifications
   firebase_core: ^2.24.0
   firebase_messaging: ^14.6.0
-  
+
   # Logging
   logger: ^2.1.0
 
@@ -59,17 +62,9 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  
+
   assets:
     - assets/images/
-    - assets/icons/
-  
-  fonts:
-    - family: GurillaFont
-      fonts:
-        - asset: assets/fonts/Gorilla-Regular.ttf
-        - asset: assets/fonts/Gorilla-Bold.ttf
-          weight: 700
 
 # iOS Configuration
 ios:

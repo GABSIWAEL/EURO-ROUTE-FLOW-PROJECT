@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:euro_route_mobile/features/driver/controllers/driver_controller.dart';
-import 'package:euro_route_mobile/shared/themes/app_theme.dart';
+
 import 'package:euro_route_mobile/shared/models/user_model.dart';
+
+import 'package:euro_route_mobile/shared/screens/qr_scanner_screen.dart';
 import 'package:euro_route_mobile/features/driver/screens/delivery_detail_screen.dart';
 
 class DriverDashboardScreen extends StatefulWidget {
@@ -15,10 +17,11 @@ class DriverDashboardScreen extends StatefulWidget {
 class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
   late DriverController _driverController;
 
+
   @override
   void initState() {
     super.initState();
-    _driverController = Get.put(DriverController());
+    _driverController = Get.find<DriverController>();
     _driverController.loadDeliveries();
   }
 
@@ -26,13 +29,29 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Deliveries'),
+        title: const Text('Mes Livraisons'),
         elevation: 0,
         actions: [
+          // QR Scanner
+          IconButton(
+            icon: const Icon(Icons.qr_code),
+            onPressed: () => Get.to(
+              () => QRScannerScreen(
+                onScanResult: (result) {
+                  Get.snackbar(
+                    'Résultat du Scan',
+                    'Scanned: $result',
+                  );
+                },
+              ),
+            ),
+          ),
+          // Refresh
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () => _driverController.loadDeliveries(),
           ),
+          // Logout
           IconButton(
             icon: const Icon(Icons.exit_to_app),
             onPressed: () => _showLogoutDialog(context),
@@ -81,7 +100,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                   _buildStatCard(
                     context,
                     'Pending',
-                    _driverController.pendingCount.toString(),
+                    _driverController.waitingCount.toString(),
                     Icons.schedule,
                     Colors.orange,
                   ),
@@ -143,9 +162,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
             Text(
               value,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: color,
-                fontWeight: FontWeight.bold,
-              ),
+                    color: color,
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             const SizedBox(height: 4),
             Text(
@@ -196,21 +215,22 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                       Text(
                         delivery.clientName,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                              fontWeight: FontWeight.bold,
+                            ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         delivery.clientPhone,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey[600],
-                        ),
+                              color: Colors.grey[600],
+                            ),
                       ),
                     ],
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: delivery.status.color.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
@@ -241,8 +261,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                       Text(
                         'Pickup',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                              fontWeight: FontWeight.w600,
+                            ),
                       ),
                       Text(
                         delivery.pickupAddress,
@@ -268,8 +288,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                       Text(
                         'Delivery',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                              fontWeight: FontWeight.w600,
+                            ),
                       ),
                       Text(
                         delivery.deliveryAddress,

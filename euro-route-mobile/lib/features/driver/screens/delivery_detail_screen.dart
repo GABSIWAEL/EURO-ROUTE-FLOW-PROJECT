@@ -25,7 +25,7 @@ class _DeliveryDetailScreenState extends State<DeliveryDetailScreen> {
   void initState() {
     super.initState();
     _driverController = Get.find<DriverController>();
-    _notesController.text = widget.delivery.notes ?? '';
+    _notesController.text = widget.delivery.clientNotes ?? '';
   }
 
   @override
@@ -95,13 +95,15 @@ class _DeliveryDetailScreenState extends State<DeliveryDetailScreen> {
             _buildSectionTitle(context, 'Timeline'),
             _buildTimelineItem(
               'Created',
-              DateFormat('MMM dd, yyyy HH:mm').format(widget.delivery.createdAt),
+              DateFormat('MMM dd, yyyy HH:mm')
+                  .format(widget.delivery.createdAt),
               Icons.calendar_today,
             ),
             if (widget.delivery.completedAt != null)
               _buildTimelineItem(
                 'Completed',
-                DateFormat('MMM dd, yyyy HH:mm').format(widget.delivery.completedAt!),
+                DateFormat('MMM dd, yyyy HH:mm')
+                    .format(widget.delivery.completedAt!),
                 Icons.check_circle,
               ),
             const SizedBox(height: 24),
@@ -176,16 +178,16 @@ class _DeliveryDetailScreenState extends State<DeliveryDetailScreen> {
               Text(
                 'Current Status',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.grey[600],
-                ),
+                      color: Colors.grey[600],
+                    ),
               ),
               const SizedBox(height: 4),
               Text(
                 widget.delivery.status.displayName,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: widget.delivery.status.color,
-                  fontWeight: FontWeight.bold,
-                ),
+                      color: widget.delivery.status.color,
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
             ],
           ),
@@ -198,15 +200,15 @@ class _DeliveryDetailScreenState extends State<DeliveryDetailScreen> {
     return Text(
       title,
       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-        fontWeight: FontWeight.bold,
-      ),
+            fontWeight: FontWeight.bold,
+          ),
     );
   }
 
   Widget _buildInfoCard({
     required IconData icon,
     required String label,
-    required String value,
+    required String? value,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -227,7 +229,7 @@ class _DeliveryDetailScreenState extends State<DeliveryDetailScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                value,
+                value ?? 'N/A',
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -264,8 +266,8 @@ class _DeliveryDetailScreenState extends State<DeliveryDetailScreen> {
               Text(
                 title,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+                      fontWeight: FontWeight.w600,
+                    ),
               ),
             ],
           ),
@@ -317,7 +319,7 @@ class _DeliveryDetailScreenState extends State<DeliveryDetailScreen> {
   Widget _buildStatusUpdateButtons(BuildContext context) {
     return Column(
       children: [
-        if (widget.delivery.status == DeliveryStatus.pending) ...[
+        if (widget.delivery.status == DeliveryStatus.waitingApproval) ...[
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -386,7 +388,7 @@ class _DeliveryDetailScreenState extends State<DeliveryDetailScreen> {
 
   IconData _getStatusIcon(DeliveryStatus status) {
     switch (status) {
-      case DeliveryStatus.pending:
+      case DeliveryStatus.waitingApproval:
         return Icons.schedule;
       case DeliveryStatus.inProgress:
         return Icons.local_shipping;

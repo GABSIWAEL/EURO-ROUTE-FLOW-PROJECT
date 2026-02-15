@@ -1,20 +1,30 @@
 import 'package:get/get.dart';
-import 'package:euro_route_mobile/shared/services/api_service.dart';
-import 'package:euro_route_mobile/shared/services/auth_service.dart';
-import 'package:euro_route_mobile/shared/models/user_model.dart';
+
+import '../../../shared/models/user_model.dart';
+import '../../../shared/services/auth_service.dart';
+import '../../../shared/services/delivery_service.dart';
+import '../../../shared/services/driver_service.dart';
+import '../../../shared/services/notification_service.dart';
 
 class AdminController extends GetxController {
-  final ApiService _apiService = ApiService();
-  final AuthService _authService = Get.find<AuthService>();
+  late final DeliveryService _deliveryService;
+  late final DriverService _driverService;
+  late final AuthService _authService;
+  late final NotificationService _notificationService;
 
   final deliveries = <Delivery>[].obs;
   final drivers = <Driver>[].obs;
+  final notifications = <Notification>[].obs;
   final isLoading = false.obs;
 
   int get totalDeliveries => deliveries.length;
-  int get pendingDeliveries => deliveries.where((d) => d.status == DeliveryStatus.pending).length;
-  int get inProgressDeliveries => deliveries.where((d) => d.status == DeliveryStatus.inProgress).length;
-  int get completedDeliveries => deliveries.where((d) => d.status == DeliveryStatus.completed).length;
+  int get waitingDeliveries => deliveries
+      .where((d) => d.status == DeliveryStatus.waitingApproval)
+      .length;
+  int get inProgressDeliveries =>
+      deliveries.where((d) => d.status == DeliveryStatus.inProgress).length;
+  int get completedDeliveries =>
+      deliveries.where((d) => d.status == DeliveryStatus.completed).length;
 
   int get totalDrivers => drivers.length;
   int get activeDrivers => drivers.where((d) => d.isActive).length;
@@ -22,6 +32,11 @@ class AdminController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    _deliveryService = Get.find<DeliveryService>();
+    _driverService = Get.find<DriverService>();
+    _authService = Get.find<AuthService>();
+    _notificationService = Get.find<NotificationService>();
+
     loadDashboardData();
   }
 
@@ -31,11 +46,12 @@ class AdminController extends GetxController {
       await Future.wait([
         _loadDeliveries(),
         _loadDrivers(),
+        _loadNotifications(),
       ]);
     } catch (e) {
       Get.snackbar(
         'Error',
-        'Failed to load dashboard data',
+        'Failed to load dashboard data: $e',
         snackPosition: SnackPosition.BOTTOM,
       );
     } finally {
@@ -45,38 +61,40 @@ class AdminController extends GetxController {
 
   Future<void> _loadDeliveries() async {
     try {
-      final response = await _apiService.getAllDeliveries();
-      deliveries.value = response
-          .map((data) => Delivery.fromJson(data))
-          .toList();
+      final loadedDeliveries = await _deliveryService.getAllDeliveries();
+      deliveries.value = loadedDeliveries;
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to load deliveries',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      print('Error loading deliveries: $e');
+      rethrow;
     }
   }
 
   Future<void> _loadDrivers() async {
     try {
-      final response = await _apiService.getAllDrivers();
-      drivers.value = response
-          .map((data) => Driver.fromJson(data))
-          .toList();
+      final loadedDrivers = await _driverService.getAllDrivers();
+      drivers.value = loadedDrivers;
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to load drivers',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      print('Error loading drivers: $e');
+      rethrow;
     }
   }
 
-  Future<bool> assignDeliveryToDriver(String deliveryId, String driverId) async {
+  Future<void> _loadNotifications() async {
     try {
-      await _apiService.assignDeliveryToDriver(deliveryId, driverId);
-      
+      final loadedNotifications = await _notificationService.getNotifications();
+      notifications.value = loadedNotifications;
+    } catch (e) {
+      print('Error loading notifications: $e');
+      // Don't rethrow to prevent dashboard from failing if notifications fail
+    }
+  }
+
+  Future<bool> assignDeliveryToDriver(
+      String deliveryId, String driverId) async {
+    try {
+      isLoading.value = true;
+      await _deliveryService.assignDeliveryToDriver(deliveryId, driverId);
+
       Get.snackbar(
         'Success',
         'Delivery assigned successfully',
@@ -88,15 +106,55 @@ class AdminController extends GetxController {
     } catch (e) {
       Get.snackbar(
         'Error',
-        'Failed to assign delivery',
+        'Failed to assign delivery: $e',
         snackPosition: SnackPosition.BOTTOM,
       );
       return false;
+    } finally {
+      isLoading.value = false;
     }
   }
 
   Future<void> logout() async {
     await _authService.logout();
     Get.offAllNamed('/login');
+  }
+
+  Future<void> toggleDriverStatus(String driverId) async {
+    try {
+      await _driverService.toggleDriverStatus(driverId);
+      await _loadDrivers();
+
+      Get.snackbar(
+        'Success',
+        'Driver status updated',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to update driver status: $e',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+  }
+
+  Future<void> deleteDriver(String driverId) async {
+    try {
+      await _driverService.deleteDriver(driverId);
+      await _loadDrivers();
+
+      Get.snackbar(
+        'Success',
+        'Driver deleted',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to delete driver: $e',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
   }
 }

@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 import 'package:euro_route_mobile/shared/services/api_service.dart';
 import 'package:euro_route_mobile/shared/models/user_model.dart';
 
@@ -9,7 +10,6 @@ class AuthService extends GetxService {
 
   final isAuthenticated = false.obs;
   final isLoading = true.obs;
-  final userRole = ''.obs;
   final currentUser = Rxn<User>();
 
   @override
@@ -17,7 +17,7 @@ class AuthService extends GetxService {
     super.onInit();
     _prefs = await SharedPreferences.getInstance();
     _apiService = ApiService();
-    
+
     await _checkAuthStatus();
   }
 
@@ -25,13 +25,19 @@ class AuthService extends GetxService {
     try {
       final token = _prefs.getString('auth_token');
       final userJson = _prefs.getString('current_user');
-      
+
       if (token != null && userJson != null) {
-        // TODO: Validate token with backend
-        isAuthenticated.value = true;
-        // Parse user from JSON
+        try {
+          final userData = jsonDecode(userJson) as Map<String, dynamic>;
+          currentUser.value = User.fromJson(userData);
+          isAuthenticated.value = true;
+        } catch (e) {
+          print('Error parsing stored user: $e');
+          await _clearStoredData();
+        }
       }
     } catch (e) {
+      print('Error checking auth status: $e');
       isAuthenticated.value = false;
     } finally {
       isLoading.value = false;
@@ -42,27 +48,27 @@ class AuthService extends GetxService {
     isLoading.value = true;
     try {
       final response = await _apiService.login(email, password);
-      
+
       final token = response['token'] ?? response['accessToken'];
       final userData = response['user'] ?? response['data'];
 
       if (token != null && userData != null) {
         // Save token
         await _prefs.setString('auth_token', token);
-        
-        // Save user
+
+        // Save user as JSON
         final user = User.fromJson(userData);
-        await _prefs.setString('current_user', user.toJson().toString());
-        
+        await _prefs.setString('current_user', jsonEncode(user.toJson()));
+
         currentUser.value = user;
-        userRole.value = user.role;
         isAuthenticated.value = true;
-        
+
         return true;
       }
-      
+
       return false;
     } catch (e) {
+      print('Login error: $e');
       Get.snackbar(
         'Login Error',
         'Failed to login. Please try again.',
@@ -83,25 +89,25 @@ class AuthService extends GetxService {
     isLoading.value = true;
     try {
       final response = await _apiService.signUp(email, password, fullName);
-      
+
       final token = response['token'] ?? response['accessToken'];
       final userData = response['user'] ?? response['data'];
 
       if (token != null && userData != null) {
         await _prefs.setString('auth_token', token);
-        
+
         final user = User.fromJson(userData);
-        await _prefs.setString('current_user', user.toJson().toString());
-        
+        await _prefs.setString('current_user', jsonEncode(user.toJson()));
+
         currentUser.value = user;
-        userRole.value = user.role;
         isAuthenticated.value = true;
-        
+
         return true;
       }
-      
+
       return false;
     } catch (e) {
+      print('Sign up error: $e');
       Get.snackbar(
         'Sign Up Error',
         'Failed to create account. Please try again.',
@@ -118,18 +124,22 @@ class AuthService extends GetxService {
     try {
       await _apiService.logout();
     } catch (e) {
-      // Continue logout even if API call fails
+      print('Logout API error: $e');
     } finally {
-      await _prefs.remove('auth_token');
-      await _prefs.remove('current_user');
-      
+      await _clearStoredData();
       isAuthenticated.value = false;
-      userRole.value = '';
-      currentUser.value = null;
     }
   }
 
-  String? getToken() {
-    return _prefs.getString('auth_token');
+  Future<void> _clearStoredData() async {
+    await _prefs.remove('auth_token');
+    await _prefs.remove('current_user');
+    currentUser.value = null;
   }
+
+  String? getToken() => _prefs.getString('auth_token');
+  User? getUser() => currentUser.value;
+  bool isAdmin() => currentUser.value?.role == UserRole.admin;
+  bool isDriver() => currentUser.value?.role == UserRole.driver;
+  bool isStaff() => currentUser.value?.role == UserRole.staff;
 }
